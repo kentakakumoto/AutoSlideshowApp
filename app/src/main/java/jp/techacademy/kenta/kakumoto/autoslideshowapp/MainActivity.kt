@@ -1,7 +1,6 @@
 package jp.techacademy.kenta.kakumoto.autoslideshowapp
 
 import android.Manifest
-import android.content.ContentResolver
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
@@ -17,15 +16,7 @@ import java.util.*
 class MainActivity : AppCompatActivity() {
 
     private val PERMISSIONS_REQUEST_CODE = 100
-    //private var resolver = contentResolver
-    var cursor: Cursor? = null /*resolver.query(
-        //MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
-        null,
-        null,
-        null,
-        null,
-        null
-    )*/
+    var cursor: Cursor? = null
     private var mTimer: Timer? = null
     private var mHandler = Handler()
 
@@ -133,16 +124,20 @@ class MainActivity : AppCompatActivity() {
         when (requestCode) {
             PERMISSIONS_REQUEST_CODE ->
                 if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    forward_button.isClickable = true
+                    back_button.isClickable = true
+                    play_button.isClickable = true
                     getContentsInfo()
                 }else{
                     Log.d("TEST","許可されなかった")
-                    requestPermissions(arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE), PERMISSIONS_REQUEST_CODE)
-                }
+                    forward_button.isClickable = false
+                    back_button.isClickable = false
+                    play_button.isClickable = false
+                    }
         }
     }
 
     private fun getContentsInfo(){
-
         val resolver = contentResolver
         cursor = resolver.query(
             MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
@@ -158,8 +153,54 @@ class MainActivity : AppCompatActivity() {
             val imageUri = ContentUris.withAppendedId(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, id)
             imageView.setImageURI(imageUri)
             Log.d("TEST","初期画像表示 idは"+id)
-
-            //cursor.close()
         }
+    }
+
+    override fun onStart() {
+        super.onStart()
+        Log.d("TEST","Start")
+    }
+
+    override fun onResume() {
+        super.onResume()
+        Log.d("TEST","Resume")
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            // パーミッションの許可状態を確認する
+            if (checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
+                // 許可されている
+                forward_button.isClickable = true
+                back_button.isClickable = true
+                play_button.isClickable = true
+                getContentsInfo()
+            } else {
+                // 許可されていないので許可ダイアログを表示する
+                forward_button.isClickable = false
+                back_button.isClickable = false
+                play_button.isClickable = false
+
+            }
+            // Android 5系以下の場合
+        } else {
+            getContentsInfo()
+            forward_button.isClickable = true
+            back_button.isClickable = true
+            play_button.isClickable = true
+        }
+    }
+
+    override fun onPause() {
+        super.onPause()
+        Log.d("TEST","Pause")
+    }
+
+    override fun onStop() {
+        super.onStop()
+        Log.d("TEST","Stop")
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        Log.d("TEST","Destroy")
+        cursor!!.close()
     }
 }
